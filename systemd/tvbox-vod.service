@@ -1,0 +1,14 @@
+[Unit]
+Description=Local LAN TVBox VOD Source & Quality Maintenance Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/shenb/tvbox-service
+ExecStart=/usr/bin/python3 /home/shenb/tvbox-service/server.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

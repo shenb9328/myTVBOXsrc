@@ -1,0 +1,10 @@
+[Unit]
+Description=TVBox Daily Incremental Sync Service (at 05:00 AM)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/shenb/tvbox-service
+ExecStart=/usr/bin/python3 /home/shenb/tvbox-service/sync.py daily
+StandardOutput=journal
+StandardError=journal

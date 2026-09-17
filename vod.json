@@ -1,0 +1,369 @@
+{
+  "spider": "",
+  "wallpaper": "https://bing.img.run/rand_uhd.php",
+  "warningText": "NAS本地专线维护源 | 更新时间: 2026-09-17 13:43:02 | 已筛选 17 条极速点播源",
+  "sites": [
+    {
+      "key": "nas_super_vod",
+      "name": "🎬 我的私有影库 [全网聚合·多线秒播]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/api/vod",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "proxy_ikun",
+      "name": "🎬 iKun影视[秒播] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/ikun",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_huya",
+      "name": "🎬 虎牙影视[高清] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/huya",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_hongniu",
+      "name": "🎬 红牛影视[极速] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/hongniu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_jisu",
+      "name": "🎬 极速影视[蓝光] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/jisu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_modu",
+      "name": "🎬 魔都动漫[日漫/国漫] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/modu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_shandian",
+      "name": "🎬 闪电影视[秒播] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/shandian",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_jinying",
+      "name": "🎬 金鹰影视[超清] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/jinying",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_haohua",
+      "name": "🎬 豪华影视[专线] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/haohua",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_xinlang",
+      "name": "🎬 新浪影视[精选] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/xinlang",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_guangsu",
+      "name": "🎬 光速影视[专线] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/guangsu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_uku",
+      "name": "🎬 U酷影视 [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/uku",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_yinghua",
+      "name": "🎬 樱花动漫[专线] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/yinghua",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_1080zy",
+      "name": "🎬 优质1080P[无广告] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/1080zy",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_feifan",
+      "name": "🎬 非凡影视[全能] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/feifan",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_360zy",
+      "name": "🎬 360影视[全库] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/360zy",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_suoni",
+      "name": "🎬 索尼影视[4K/秒播] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/suoni",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_baofeng",
+      "name": "🎬 暴风影视[高速] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/baofeng",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "raw_ikun",
+      "name": "⚡ iKun影视[秒播] [原生细分分类]",
+      "type": 1,
+      "api": "https://ikunzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_huya",
+      "name": "⚡ 虎牙影视[高清] [原生细分分类]",
+      "type": 1,
+      "api": "https://www.huyaapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_hongniu",
+      "name": "⚡ 红牛影视[极速] [原生细分分类]",
+      "type": 1,
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_jisu",
+      "name": "⚡ 极速影视[蓝光] [原生细分分类]",
+      "type": 1,
+      "api": "https://jszyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_modu",
+      "name": "⚡ 魔都动漫[日漫/国漫] [原生细分分类]",
+      "type": 1,
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_shandian",
+      "name": "⚡ 闪电影视[秒播] [原生细分分类]",
+      "type": 1,
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_jinying",
+      "name": "⚡ 金鹰影视[超清] [原生细分分类]",
+      "type": 1,
+      "api": "https://jyzyapi.com/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_haohua",
+      "name": "⚡ 豪华影视[专线] [原生细分分类]",
+      "type": 1,
+      "api": "https://hhzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_xinlang",
+      "name": "⚡ 新浪影视[精选] [原生细分分类]",
+      "type": 1,
+      "api": "http://api.xinlangapi.com/xinlangapi.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_guangsu",
+      "name": "⚡ 光速影视[专线] [原生细分分类]",
+      "type": 1,
+      "api": "https://api.guangsuapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_uku",
+      "name": "⚡ U酷影视 [原生细分分类]",
+      "type": 1,
+      "api": "https://api.ukuapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_yinghua",
+      "name": "⚡ 樱花动漫[专线] [原生细分分类]",
+      "type": 1,
+      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_1080zy",
+      "name": "⚡ 优质1080P[无广告] [原生细分分类]",
+      "type": 1,
+      "api": "https://api.1080zyku.com/inc/apijson.php",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_feifan",
+      "name": "⚡ 非凡影视[全能] [原生细分分类]",
+      "type": 1,
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_360zy",
+      "name": "⚡ 360影视[全库] [原生细分分类]",
+      "type": 1,
+      "api": "https://360zy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_suoni",
+      "name": "⚡ 索尼影视[4K/秒播] [原生细分分类]",
+      "type": 1,
+      "api": "https://suoniapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_baofeng",
+      "name": "⚡ 暴风影视[高速] [原生细分分类]",
+      "type": 1,
+      "api": "https://bfzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    }
+  ],
+  "parses": [
+    {
+      "name": "聚合解析1",
+      "type": 0,
+      "url": "https://jx.jsonplayer.com/player/?url="
+    },
+    {
+      "name": "聚合解析2",
+      "type": 0,
+      "url": "https://jx.xmflv.com/?url="
+    },
+    {
+      "name": "聚合解析3",
+      "type": 0,
+      "url": "https://jx.aidouer.net/?url="
+    }
+  ],
+  "rules": [
+    {
+      "name": "通用去广告",
+      "hosts": [
+        "vip.ffzy-play.com",
+        "vip.ffzy-online.com",
+        "vip.lz-cdn.com"
+      ],
+      "regex": [
+        "#EXT-X-DISCONTINUITY\\r*\\n*#EXTINF:6.666667,[\\s\\S]*?#EXT-X-DISCONTINUITY"
+      ]
+    }
+  ],
+  "doh": [
+    {
+      "name": "AliDNS",
+      "url": "https://dns.alidns.com/dns-query",
+      "ips": [
+        "223.5.5.5",
+        "223.6.6.6"
+      ]
+    },
+    {
+      "name": "TencentDNS",
+      "url": "https://doh.pub/dns-query",
+      "ips": [
+        "119.29.29.29"
+      ]
+    }
+  ]
+}
