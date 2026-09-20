@@ -52,9 +52,11 @@ if (fs.existsSync(serverFile)) {
   const targetStart = "const { startServer } = require(\x27next/dist/server/lib/start-server\x27)";
   const proxyCode = `
 const http = require("http");
+const fs = require("fs");
 const originalCreateServer = http.createServer;
 http.createServer = function(requestListener) {
   return originalCreateServer.call(this, (req, res) => {
+    // 1. 代理 /cctv6 与 /api/cctv6
     if (req.url && (req.url === "/cctv6" || req.url === "/cctv6/" || req.url.startsWith("/api/cctv6") || req.url.startsWith("/cctv6?"))) {
       const targetPath = req.url === "/cctv6/" ? "/cctv6" : req.url;
       const targetUrl = "http://192.168.0.120:5888" + targetPath;
@@ -72,6 +74,20 @@ http.createServer = function(requestListener) {
       req.pipe(proxyReq, { end: true });
       return;
     }
+
+    // 2. 拦截 chunk 请求，强制返回最新无缓存 chunk，防止客户端因缓存丢失 CCTV6 栏目
+    if (req.url && (req.url.includes("706-66bfc47f149a3d05.js") || req.url.includes("706-cctv6-v2.js"))) {
+      const chunkPath = "/app/.next/static/chunks/706-66bfc47f149a3d05.js";
+      if (fs.existsSync(chunkPath)) {
+        res.writeHead(200, {
+          "Content-Type": "application/javascript; charset=UTF-8",
+          "Cache-Control": "no-cache, no-store, must-revalidate"
+        });
+        fs.createReadStream(chunkPath).pipe(res);
+        return;
+      }
+    }
+
     return requestListener(req, res);
   });
 };
