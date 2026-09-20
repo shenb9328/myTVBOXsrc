@@ -15,6 +15,7 @@ import threading
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import urllib.request
 import urllib.parse
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -970,6 +971,15 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(content)
             return
 
+        elif path == '/api/cctv6/proxy':
+            query_params = urllib.parse.parse_qs(parsed.query)
+            target_url = query_params.get('url', [''])[0]
+            if not target_url:
+                self.send_error(400, "Missing url parameter")
+                return
+            self.handle_cctv6_proxy(target_url)
+            return
+
         elif path == '/api/cctv6':
             query_params = urllib.parse.parse_qs(parsed.query)
             data = cctv6.build_tvbox_response(query_params)
@@ -1221,6 +1231,87 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
 
         else:
             self.send_error(404, "File Not Found")
+
+    def handle_cctv6_proxy(self, target_url):
+        """流媒体中转代理：为外网访问提供 M3U8 重写与 TS 切片流式中继，抹平运营商与 HTTPS 限制"""
+        try:
+            req_headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "Referer": "http://live.miguvideo.com/",
+                "Accept": "*/*"
+            }
+            range_val = self.headers.get('Range')
+            if range_val:
+                req_headers['Range'] = range_val
+
+            req = urllib.request.Request(target_url, headers=req_headers)
+            try:
+                resp = urllib.request.urlopen(req, timeout=10)
+            except Exception:
+                # 若直接拉取受阻，自动尝试通过本地代理网关拉取
+                try:
+                    proxy_handler = urllib.request.ProxyHandler({'http': 'http://192.168.0.115:7890'})
+                    opener = urllib.request.build_opener(proxy_handler)
+                    resp = opener.open(req, timeout=10)
+                except Exception as ex:
+                    self.send_error(502, f"CCTV6 Stream Fetch Failed: {ex}")
+                    return
+
+            content_type = resp.headers.get('Content-Type', '')
+            is_m3u8 = 'mpegurl' in content_type.lower() or 'octet-stream' in content_type.lower() or target_url.endswith('.m3u8') or 'index.m3u8' in target_url
+
+            if is_m3u8:
+                raw_text = resp.read().decode('utf-8', errors='ignore')
+                rewritten_lines = []
+                for line in raw_text.splitlines():
+                    line_s = line.strip()
+                    if line_s.startswith('#EXT-X-KEY') or line_s.startswith('#EXT-X-MAP'):
+                        def replace_uri(match):
+                            orig = match.group(1)
+                            resolved = urllib.parse.urljoin(target_url, orig)
+                            return f'URI="/api/cctv6/proxy?url={urllib.parse.quote(resolved)}"'
+                        line = re.sub(r'URI="([^"]+)"', replace_uri, line)
+                        rewritten_lines.append(line)
+                    elif line_s and not line_s.startswith('#'):
+                        resolved = urllib.parse.urljoin(target_url, line_s)
+                        rewritten_lines.append(f"/api/cctv6/proxy?url={urllib.parse.quote(resolved)}")
+                    else:
+                        rewritten_lines.append(line)
+
+                body = "\n".join(rewritten_lines).encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            else:
+                # 视频分片 TS 流
+                self.send_response(resp.status if hasattr(resp, 'status') else 200)
+                self.send_header('Content-Type', content_type or 'video/mp2t')
+                if 'Content-Length' in resp.headers:
+                    self.send_header('Content-Length', resp.headers['Content-Length'])
+                if 'Content-Range' in resp.headers:
+                    self.send_header('Content-Range', resp.headers['Content-Range'])
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Accept-Ranges', 'bytes')
+                self.end_headers()
+
+                while True:
+                    chunk = resp.read(64 * 1024)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
+                return
+        except Exception as e:
+            try:
+                self.send_error(502, f"Proxy Handler Error: {e}")
+            except Exception:
+                pass
+
+
 
 def main():
     if not os.path.exists(OUTPUT_VOD_JSON):

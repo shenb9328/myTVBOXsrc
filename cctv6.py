@@ -502,13 +502,61 @@ INDEX_HTML = """<!DOCTYPE html>
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
         .modal-header {
-            padding: 16px 20px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--card-border);
+            gap: 12px;
         }
-        .modal-title { font-size: 17px; font-weight: 600; }
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mode-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .mode-lan {
+            background: rgba(46, 213, 115, 0.18);
+            color: #2ed573;
+            border: 1px solid rgba(46, 213, 115, 0.35);
+        }
+        .mode-wan {
+            background: rgba(55, 66, 250, 0.18);
+            color: #70a1ff;
+            border: 1px solid rgba(55, 66, 250, 0.35);
+        }
+        .mode-switch-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: var(--text-sub);
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-switch-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.18);
+        }
         .modal-close {
             background: rgba(255,255,255,0.1);
             border: none;
@@ -520,6 +568,7 @@ INDEX_HTML = """<!DOCTYPE html>
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
         .player-box {
             position: relative;
@@ -563,7 +612,11 @@ INDEX_HTML = """<!DOCTYPE html>
     <div class="modal" id="playModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="modalTitle">正在播放</div>
+                <div class="modal-header-left">
+                    <div class="modal-title" id="modalTitle">正在播放</div>
+                    <span id="modeBadge" class="mode-badge mode-lan">⚡ 局域网直连</span>
+                    <button id="modeSwitchBtn" class="mode-switch-btn" onclick="togglePlayMode()">切换中转</button>
+                </div>
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
             <div class="player-box">
@@ -576,7 +629,24 @@ INDEX_HTML = """<!DOCTYPE html>
         let currentHls = null;
         let plyrPlayer = null;
         let activeDate = "";
+        let currentPlayMode = "";
+        let currentMovie = null;
 
+        function isLocalNetwork() {
+            // 1. 如果当前页面以 HTTPS 协议访问，浏览器强制封锁一切明文 HTTP 媒体流(Mixed Content)，必须走同源代理
+            if (window.location.protocol === 'https:') {
+                return false;
+            }
+            const host = window.location.hostname;
+            // 2. 本地回环或局域网私有网段，直接直连
+            if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.local')) {
+                return true;
+            }
+            if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+            if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+            if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+            return false;
+        }
         async function init() {
             const video = document.getElementById('player');
             plyrPlayer = new Plyr(video, {
@@ -639,32 +709,96 @@ INDEX_HTML = """<!DOCTYPE html>
             });
         }
 
+        function updateModeUI(mode) {
+            const badge = document.getElementById('modeBadge');
+            const btn = document.getElementById('modeSwitchBtn');
+            if (!badge || !btn) return;
+            if (mode === 'lan') {
+                badge.className = 'mode-badge mode-lan';
+                badge.innerHTML = '⚡ 局域网直连';
+                btn.innerText = '切换中转';
+            } else {
+                badge.className = 'mode-badge mode-wan';
+                badge.innerHTML = '🛡️ 外网中转';
+                btn.innerText = '切换直连';
+            }
+        }
+
+        function togglePlayMode() {
+            if (!currentMovie) return;
+            const newMode = (currentPlayMode === 'lan') ? 'proxy' : 'lan';
+            startPlayWithMode(currentMovie, newMode);
+        }
+
         function playMovie(movie) {
+            currentMovie = movie;
             document.getElementById('modalTitle').innerText = movie.name + ' (' + movie.full_time + ')';
             const modal = document.getElementById('playModal');
             modal.classList.add('open');
 
+            // 局域网优先直连，外网默认中转代理
+            const defaultMode = isLocalNetwork() ? 'lan' : 'proxy';
+            startPlayWithMode(movie, defaultMode);
+        }
+
+        function startPlayWithMode(movie, mode) {
+            currentPlayMode = mode;
+            updateModeUI(mode);
+
             const video = document.getElementById('player');
-            const url = movie.play_url;
+            const targetUrl = (mode === 'lan') ? movie.play_url : ('/api/cctv6/proxy?url=' + encodeURIComponent(movie.play_url));
 
             if (currentHls) {
                 currentHls.destroy();
                 currentHls = null;
             }
 
+            let hasFallback = false;
+            function triggerFallback(errDetail) {
+                if (hasFallback) return;
+                hasFallback = true;
+                if (currentPlayMode === 'lan') {
+                    console.warn('[CCTV6] 直连拉流受阻 (' + errDetail + ')，自动降级为外网中转代理模式重试...');
+                    startPlayWithMode(movie, 'proxy');
+                }
+            }
+
             if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
-                video.play();
+                video.src = targetUrl;
+                video.onerror = () => triggerFallback('video.onerror');
+                video.play().catch(e => {
+                    console.warn('Auto-play error:', e);
+                });
             } else if (Hls.isSupported()) {
-                currentHls = new Hls();
-                currentHls.loadSource(url);
+                currentHls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    fragLoadingTimeOut: 10000,
+                    manifestLoadingTimeOut: 10000
+                });
+                currentHls.loadSource(targetUrl);
                 currentHls.attachMedia(video);
                 currentHls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play();
+                    video.play().catch(() => {});
+                });
+                currentHls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                triggerFallback('HLS Network Error');
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                currentHls.recoverMediaError();
+                                break;
+                            default:
+                                triggerFallback('HLS Fatal Error');
+                                break;
+                        }
+                    }
                 });
             } else {
-                video.src = url;
-                video.play();
+                video.src = targetUrl;
+                video.play().catch(() => {});
             }
         }
 
@@ -677,6 +811,7 @@ INDEX_HTML = """<!DOCTYPE html>
                 currentHls.destroy();
                 currentHls = null;
             }
+            currentMovie = null;
         }
 
         window.onload = init;
