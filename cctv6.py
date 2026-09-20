@@ -336,9 +336,8 @@ INDEX_HTML = """<!DOCTYPE html>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>CCTV-6 往期电影点播台</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -619,15 +618,12 @@ INDEX_HTML = """<!DOCTYPE html>
                 </div>
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
-            <div class="player-box">
-                <video id="player" playsinline controls></video>
-            </div>
+            <div class="player-box" id="artplayer-container"></div>
         </div>
     </div>
 
     <script>
-        let currentHls = null;
-        let plyrPlayer = null;
+        let art = null;
         let activeDate = "";
         let currentPlayMode = "";
         let currentMovie = null;
@@ -647,12 +643,8 @@ INDEX_HTML = """<!DOCTYPE html>
             if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
             return false;
         }
-        async function init() {
-            const video = document.getElementById('player');
-            plyrPlayer = new Plyr(video, {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen', 'airplay', 'pip']
-            });
 
+        async function init() {
             const res = await fetch('/api/cctv6/days');
             const days = await res.json();
             const tabsEl = document.getElementById('dateTabs');
@@ -745,12 +737,11 @@ INDEX_HTML = """<!DOCTYPE html>
             currentPlayMode = mode;
             updateModeUI(mode);
 
-            const video = document.getElementById('player');
             const targetUrl = (mode === 'lan') ? movie.play_url : ('/api/cctv6/proxy?url=' + encodeURIComponent(movie.play_url));
 
-            if (currentHls) {
-                currentHls.destroy();
-                currentHls = null;
+            if (art) {
+                art.destroy(false);
+                art = null;
             }
 
             let hasFallback = false;
@@ -763,53 +754,97 @@ INDEX_HTML = """<!DOCTYPE html>
                 }
             }
 
-            if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = targetUrl;
-                video.onerror = () => triggerFallback('video.onerror');
-                video.play().catch(e => {
-                    console.warn('Auto-play error:', e);
-                });
-            } else if (Hls.isSupported()) {
-                currentHls = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    fragLoadingTimeOut: 10000,
-                    manifestLoadingTimeOut: 10000
-                });
-                currentHls.loadSource(targetUrl);
-                currentHls.attachMedia(video);
-                currentHls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play().catch(() => {});
-                });
-                currentHls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                triggerFallback('HLS Network Error');
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                currentHls.recoverMediaError();
-                                break;
-                            default:
-                                triggerFallback('HLS Fatal Error');
-                                break;
+            art = new Artplayer({
+                container: '#artplayer-container',
+                url: targetUrl,
+                title: movie.name + ' (' + movie.full_time + ')',
+                type: 'm3u8',
+                theme: '#ff4757',
+                volume: 0.8,
+                isLive: false,
+                autoplay: true,
+                pip: true,
+                setting: true,
+                playbackRate: true,
+                aspectRatio: true,
+                fullscreen: true,
+                fullscreenWeb: true,
+                playsInline: true,
+                airplay: true,
+                hotkey: true,
+                fastForward: true,
+                autoOrientation: true,
+                lock: true,
+                moreVideoAttr: {
+                    crossOrigin: 'anonymous',
+                    playsInline: true,
+                    'webkit-playsinline': true
+                },
+                customType: {
+                    m3u8: function (video, url, artInstance) {
+                        if (video.hls) {
+                            video.hls.destroy();
+                        }
+                        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = url;
+                            video.onerror = () => triggerFallback('Native HLS error');
+                        } else if (Hls.isSupported()) {
+                            const hls = new Hls({
+                                enableWorker: true,
+                                lowLatencyMode: false,
+                                maxBufferLength: 30,
+                                maxMaxBufferLength: 120,
+                                backBufferLength: 30,
+                                maxBufferSize: 60 * 1000 * 1000,
+                            });
+
+                            video.addEventListener('playing', () => {
+                                try {
+                                    if (hls.config) {
+                                        hls.config.maxBufferLength = 600;
+                                        hls.config.maxMaxBufferLength = 900;
+                                        hls.config.maxBufferSize = 500 * 1024 * 1024;
+                                    }
+                                } catch (e) {}
+                            }, { once: true });
+
+                            hls.loadSource(url);
+                            hls.attachMedia(video);
+                            video.hls = hls;
+
+                            hls.on(Hls.Events.ERROR, function (event, data) {
+                                if (data.fatal) {
+                                    switch (data.type) {
+                                        case Hls.ErrorTypes.NETWORK_ERROR:
+                                            triggerFallback('HLS Network Error');
+                                            break;
+                                        case Hls.ErrorTypes.MEDIA_ERROR:
+                                            hls.recoverMediaError();
+                                            break;
+                                        default:
+                                            triggerFallback('HLS Fatal Error');
+                                            break;
+                                    }
+                                }
+                            });
+                        } else {
+                            video.src = url;
                         }
                     }
-                });
-            } else {
-                video.src = targetUrl;
-                video.play().catch(() => {});
-            }
+                }
+            });
+
+            art.on('error', () => {
+                triggerFallback('Artplayer error');
+            });
         }
 
         function closeModal() {
             const modal = document.getElementById('playModal');
             modal.classList.remove('open');
-            const video = document.getElementById('player');
-            video.pause();
-            if (currentHls) {
-                currentHls.destroy();
-                currentHls = null;
+            if (art) {
+                art.destroy(false);
+                art = null;
             }
             currentMovie = null;
         }
