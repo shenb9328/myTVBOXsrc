@@ -155,6 +155,105 @@ def sync_strm_files():
     print(f"[CCTV6] [{datetime.now()}] Synced {count} .strm movie files to {MEDIA_DIR}")
     return count
 
+def get_all_recent_movies(days=7):
+    """获取近 N 天的所有电影，按播出时间倒序排列"""
+    all_movies = []
+    for d in get_recent_days(days):
+        movies = get_cctv6_movies(d["date"])
+        all_movies.extend(movies)
+    # 按 start_ts 倒序（最新的电影排最前）
+    all_movies.sort(key=lambda x: x.get("start_ts", 0), reverse=True)
+    return all_movies
+
+def query_cctv6_for_super_vod(page=1, pagesize=30, class_kw="", keyword=""):
+    """供超级私有影库 /api/vod 调用的查询与筛选函数"""
+    movies = get_all_recent_movies(7)
+    
+    # 关键词搜索
+    if keyword:
+        kw = keyword.strip().lower()
+        movies = [m for m in movies if kw in m["name"].lower()]
+
+    # 日期多维筛选 (class_kw: 如 "今天", "昨天", "前天", "09/19" 或 "20260919")
+    elif class_kw:
+        ckw = class_kw.strip()
+        recent = get_recent_days(7)
+        # 查找对应的 date_str
+        target_date = ""
+        for r in recent:
+            if ckw in r["label"] or ckw in r["short_label"] or ckw == r["date"]:
+                target_date = r["date"]
+                break
+        if target_date:
+            movies = [m for m in movies if m["date"] == target_date]
+        else:
+            movies = [m for m in movies if ckw in m["date"] or ckw in m["full_time"]]
+
+    total = len(movies)
+    start_idx = (page - 1) * pagesize
+    end_idx = start_idx + pagesize
+    page_items = movies[start_idx:end_idx]
+
+    vod_list = []
+    for m in page_items:
+        vod_list.append({
+            "vod_id": f"cctv6_{m['id']}",
+            "vod_name": m["name"],
+            "type_id": 6,
+            "type_name": "CCTV6",
+            "vod_pic": m["pic"],
+            "vod_remarks": f"{m['full_time']} · {m['duration']}",
+            "vod_year": m["date"][:4],
+            "vod_area": "中国大陆",
+            "vod_actor": "CCTV-6高清重温",
+            "vod_director": "中央广播电视总台",
+            "vod_content": f"播出时间: {m['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
+            "vod_play_from": "CCTV-6高清",
+            "vod_play_url": f"全片正片${m['play_url']}"
+        })
+
+    import math
+    pagecount = max(1, math.ceil(total / pagesize)) if pagesize else 1
+
+    return {
+        "page": page,
+        "pagecount": pagecount,
+        "limit": pagesize,
+        "total": total,
+        "list": vod_list
+    }
+
+def get_cctv6_detail_for_super_vod(vod_id):
+    """根据 vod_id (如 cctv6_20260918_1789743660000) 返回单片完整详情与线路"""
+    raw_id = vod_id.replace("cctv6_", "")
+    parts = raw_id.split("_")
+    date_str = parts[0]
+    movies = get_cctv6_movies(date_str)
+    target = next((m for m in movies if m["id"] == raw_id), None)
+    if not target:
+        # 如果找不到，从所有缓存中搜一遍
+        all_m = get_all_recent_movies(7)
+        target = next((m for m in all_m if m["id"] == raw_id), None)
+    
+    if not target:
+        return None
+
+    return {
+        "vod_id": vod_id,
+        "vod_name": target["name"],
+        "type_id": 6,
+        "type_name": "CCTV6",
+        "vod_pic": target["pic"],
+        "vod_remarks": f"{target['full_time']} · {target['duration']}",
+        "vod_year": target["date"][:4],
+        "vod_area": "中国大陆",
+        "vod_actor": "CCTV-6高清重温",
+        "vod_director": "中央广播电视总台",
+        "vod_content": f"播出时间: {target['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
+        "vod_play_from": "CCTV-6高清",
+        "vod_play_url": f"全片正片${target['play_url']}"
+    }
+
 def build_tvbox_response(qs):
     """TVBox json/spider 协议实现"""
     t = qs.get("t", [""])[0]

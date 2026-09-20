@@ -381,10 +381,27 @@ VOD_CLASSES = [
     {"type_id": 2, "type_name": "电视剧"},
     {"type_id": 3, "type_name": "综艺"},
     {"type_id": 4, "type_name": "动漫"},
-    {"type_id": 5, "type_name": "短剧"}
+    {"type_id": 5, "type_name": "短剧"},
+    {"type_id": 6, "type_name": "CCTV6"}
 ]
 
 VOD_FILTERS = {
+    "6": [
+        {
+            "key": "class",
+            "name": "播映日期",
+            "value": [
+                {"n": "全部", "v": ""},
+                {"n": "今天", "v": "今天"},
+                {"n": "昨天", "v": "昨天"},
+                {"n": "前天", "v": "前天"},
+                {"n": "3天前", "v": "3天前"},
+                {"n": "4天前", "v": "4天前"},
+                {"n": "5天前", "v": "5天前"},
+                {"n": "6天前", "v": "6天前"}
+            ]
+        }
+    ],
     "1": [
         {
             "key": "class",
@@ -583,6 +600,20 @@ def handle_super_vod(query_params):
 
     # 1. 详情查询 (合成多站点播放线路)
     if ids:
+        if str(ids).startswith('cctv6_'):
+            detail = cctv6.get_cctv6_detail_for_super_vod(str(ids))
+            if detail:
+                return {
+                    "code": 1,
+                    "msg": "数据列表",
+                    "page": 1,
+                    "pagecount": 1,
+                    "limit": "1",
+                    "total": 1,
+                    "list": [detail]
+                }
+            return {"code": 0, "msg": "未找到影片", "list": []}
+
         try:
             vid = int(ids)
             detail = query_detail(vid)
@@ -604,6 +635,10 @@ def handle_super_vod(query_params):
     # 2. 搜索片名
     if wd:
         res = search_videos(wd, page=pg, pagesize=30)
+        cctv6_res = cctv6.query_cctv6_for_super_vod(keyword=wd)
+        if cctv6_res.get('list'):
+            res['list'] = cctv6_res['list'] + res.get('list', [])
+            res['total'] = len(res['list'])
         res.update({
             "code": 1,
             "msg": "搜索结果",
@@ -627,6 +662,16 @@ def handle_super_vod(query_params):
         }
 
     # 4. 浏览大类列表与多维筛选
+    if t in ['6', 'cctv6', 6] or class_kw in ['CCTV6', 'cctv6']:
+        res = cctv6.query_cctv6_for_super_vod(page=pg, pagesize=30, class_kw=class_kw)
+        res.update({
+            "code": 1,
+            "msg": "数据列表",
+            "class": VOD_CLASSES,
+            "filters": VOD_FILTERS
+        })
+        return res
+
     type_id = int(t) if t and t.isdigit() else None
     res = query_videos(
         type_id=type_id,
@@ -675,6 +720,10 @@ DASHBOARD_HTML_TEMPLATE = """<!DOCTYPE html>
         <p class="text-slate-400 text-sm mt-1">本地局域网自动化清洗去重、测活测速与低延迟优选服务 · 内置【电影/电视/综艺/动漫】大类聚合引擎</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
+        <a href="/cctv6" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 active:scale-95 transition-all font-medium text-sm flex items-center gap-2 shadow-lg shadow-red-500/25 text-white">
+          <span class="text-base">🍿</span>
+          <span>CCTV6 专区</span>
+        </a>
         <button id="pushBtn" onclick="pushToBox()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 transition-all font-medium text-sm flex items-center gap-2 shadow-lg shadow-purple-500/20">
           <span>📺</span>
           <span id="pushText">一键推送到电视盒子</span>
@@ -694,7 +743,7 @@ DASHBOARD_HTML_TEMPLATE = """<!DOCTYPE html>
           <div class="text-lg md:text-xl font-mono text-emerald-400 font-semibold select-all break-all" id="subUrl">
             http://{{LAN_IP}}:{{PORT}}/vod.json
           </div>
-          <div class="text-xs text-slate-400">核心分类：<b>电影 · 电视 · 综艺 · 动漫</b>（自动聚合海量子类，绝无空数据）</div>
+          <div class="text-xs text-slate-400">核心分类：<b>电影 · 电视 · 综艺 · 动漫 · 短剧 · CCTV6</b>（自动聚合海量子类，绝无空数据）</div>
         </div>
         <div class="flex gap-2">
           <button onclick="copySubUrl()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm font-medium transition-all active:scale-95 flex items-center gap-1.5 text-slate-200">
