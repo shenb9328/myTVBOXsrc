@@ -334,6 +334,50 @@ def run_inspection() -> dict:
                 "url": "https://doh.pub/dns-query",
                 "ips": ["119.29.29.29"]
             }
+        ],
+        "ijk": [
+            {
+                "group": "软解码",
+                "options": [
+                    {"name": "opensles", "category": 4, "value": "0"},
+                    {"name": "framedrop", "category": 4, "value": "1"},
+                    {"name": "soundtouch", "category": 4, "value": "1"},
+                    {"name": "start-on-prepared", "category": 4, "value": "1"},
+                    {"name": "http-detect-rangeupport", "category": 1, "value": "0"},
+                    {"name": "fflags", "category": 1, "value": "fastseek"},
+                    {"name": "skip_loop_filter", "category": 2, "value": "48"},
+                    {"name": "reconnect", "category": 4, "value": "1"},
+                    {"name": "enable-accurate-seek", "category": 4, "value": "0"},
+                    {"name": "mediacodec", "category": 4, "value": "0"},
+                    {"name": "mediacodec-all-videos", "category": 4, "value": "0"},
+                    {"name": "mediacodec-auto-rotate", "category": 4, "value": "0"},
+                    {"name": "mediacodec-handle-resolution-change", "category": 4, "value": "0"},
+                    {"name": "mediacodec-hevc", "category": 4, "value": "0"},
+                    {"name": "max-buffer-size", "category": 4, "value": "62914560"},
+                    {"name": "packet-buffering", "category": 4, "value": "1"}
+                ]
+            },
+            {
+                "group": "硬解码",
+                "options": [
+                    {"name": "opensles", "category": 4, "value": "0"},
+                    {"name": "framedrop", "category": 4, "value": "1"},
+                    {"name": "soundtouch", "category": 4, "value": "1"},
+                    {"name": "start-on-prepared", "category": 4, "value": "1"},
+                    {"name": "http-detect-rangeupport", "category": 1, "value": "0"},
+                    {"name": "fflags", "category": 1, "value": "fastseek"},
+                    {"name": "skip_loop_filter", "category": 2, "value": "48"},
+                    {"name": "reconnect", "category": 4, "value": "1"},
+                    {"name": "enable-accurate-seek", "category": 4, "value": "0"},
+                    {"name": "mediacodec", "category": 4, "value": "1"},
+                    {"name": "mediacodec-all-videos", "category": 4, "value": "1"},
+                    {"name": "mediacodec-auto-rotate", "category": 4, "value": "1"},
+                    {"name": "mediacodec-handle-resolution-change", "category": 4, "value": "1"},
+                    {"name": "mediacodec-hevc", "category": 4, "value": "1"},
+                    {"name": "max-buffer-size", "category": 4, "value": "62914560"},
+                    {"name": "packet-buffering", "category": 4, "value": "1"}
+                ]
+            }
         ]
     }
 

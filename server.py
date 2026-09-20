@@ -22,6 +22,7 @@ from datetime import datetime
 from checker import run_inspection, OUTPUT_VOD_JSON, OUTPUT_TVBOX_JSON, OUTPUT_VALID_FILE
 from db import init_db, query_videos, query_detail, search_videos, get_stats
 from sync import run_sync
+import cctv6
 
 PORT = 5888
 TVBOX_IP = "192.168.0.245"
@@ -910,8 +911,74 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlsplit(self.path)
         path = parsed.path
 
+        # 0. CCTV-6 往期电影点播台与时移回看专线
+        if path in ['/cctv6', '/cctv6/', '/cctv6/index.html']:
+            content = cctv6.INDEX_HTML.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        elif path == '/api/cctv6':
+            query_params = urllib.parse.parse_qs(parsed.query)
+            data = cctv6.build_tvbox_response(query_params)
+            content = json.dumps(data, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        elif path == '/api/cctv6/days':
+            data = cctv6.get_recent_days(7)
+            content = json.dumps(data, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        elif path == '/api/cctv6/movies':
+            query_params = urllib.parse.parse_qs(parsed.query)
+            date_str = query_params.get('date', [datetime.now().strftime('%Y%m%d')])[0]
+            data = cctv6.get_cctv6_movies(date_str)
+            content = json.dumps(data, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        elif path in ['/live.m3u', '/cctv6.m3u']:
+            content = cctv6.build_m3u_content().encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.send_header('Content-Disposition', 'inline; filename="cctv6.m3u"')
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
+        elif path == '/api/cctv6/sync_strm':
+            count = cctv6.sync_strm_files()
+            content = json.dumps({"status": "ok", "synced_files": count}).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
         # 1. 本地轻量 SQLite 超级私有聚合源端点（多线路合成 + 多维筛选方案B + 毫秒级秒开）
-        if path in ['/api/vod', '/api/super_vod']:
+        elif path in ['/api/vod', '/api/super_vod']:
             query_params = urllib.parse.parse_qs(parsed.query)
             data = handle_super_vod(query_params)
             content = json.dumps(data, ensure_ascii=False).encode('utf-8')
@@ -953,6 +1020,25 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(content)
             except Exception as e:
                 self.send_error(500, f"Error reading vod config: {e}")
+            return
+
+        # 2.1 MoonTV / LunaTV 格式配置订阅
+        elif path in ['/moontv.json']:
+            moontv_file = os.path.join(CURRENT_DIR, 'moontv_config.json')
+            try:
+                if os.path.exists(moontv_file):
+                    with open(moontv_file, 'rb') as f:
+                        content = f.read()
+                else:
+                    content = b'{}'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Content-Length', str(len(content)))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(content)
+            except Exception as e:
+                self.send_error(500, f"Error reading moontv config: {e}")
             return
 
         # 3. 状态查询 API
@@ -1098,6 +1184,28 @@ def main():
     t_daily = threading.Thread(target=daily_sync_scheduler, daemon=True)
     t_daily.start()
 
+    def cctv6_worker():
+        # 首次启动预热
+        time.sleep(2)
+        try:
+            for day in cctv6.get_recent_days(3):
+                cctv6.get_cctv6_movies(day["date"])
+            cctv6.sync_strm_files()
+        except Exception as e:
+            print(f"[CCTV6] Initial sync error: {e}")
+
+        while True:
+            time.sleep(3600)
+            try:
+                for day in cctv6.get_recent_days(7):
+                    cctv6.get_cctv6_movies(day["date"])
+                cctv6.sync_strm_files()
+            except Exception as e:
+                print(f"[CCTV6] Background worker error: {e}")
+
+    t_cctv6 = threading.Thread(target=cctv6_worker, daemon=True)
+    t_cctv6.start()
+
     server_address = ('0.0.0.0', PORT)
     httpd = ThreadingHTTPServer(server_address, TVBoxRequestHandler)
     print(f"\n=======================================================")
@@ -1105,7 +1213,9 @@ def main():
     print(f"本地服务访问: http://127.0.0.1:{PORT}/")
     print(f"局域网控制台: http://{LAN_IP}:{PORT}/")
     print(f"TVBox 订阅源: http://{LAN_IP}:{PORT}/vod.json")
-    print(f"超级私有源: http://{LAN_IP}:{PORT}/api/vod")
+    print(f"超级私有源:   http://{LAN_IP}:{PORT}/api/vod")
+    print(f"CCTV6点播台:  http://{LAN_IP}:{PORT}/cctv6 (iPad/手机/电脑)")
+    print(f"CCTV6回看源:  http://{LAN_IP}:{PORT}/live.m3u (支持全天回看)")
     print(f"=======================================================\n")
     try:
         httpd.serve_forever()

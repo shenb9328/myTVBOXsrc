@@ -1,0 +1,156 @@
+{
+  "api_site": {
+    "local_super_vod": {
+      "name": "🎬 我的私有影库 [全网聚合·多线秒播]",
+      "api": "http://192.168.0.116:5888/api/vod",
+      "detail": "http://192.168.0.116:5888/api/vod"
+    },
+    "suoni": {
+      "name": "索尼影视[4K/秒播]",
+      "api": "https://suoniapi.com/api.php/provide/vod/",
+      "detail": "https://suoniapi.com/api.php/provide/vod/"
+    },
+    "hongniu": {
+      "name": "红牛影视[极速]",
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
+      "detail": "https://www.hongniuzy2.com/api.php/provide/vod/"
+    },
+    "jinying": {
+      "name": "金鹰影视[超清]",
+      "api": "https://jyzyapi.com/provide/vod/",
+      "detail": "https://jyzyapi.com/provide/vod/"
+    },
+    "guangsu": {
+      "name": "光速影视[专线]",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod/",
+      "detail": "https://api.guangsuapi.com/api.php/provide/vod/"
+    },
+    "jisu": {
+      "name": "极速影视[蓝光]",
+      "api": "https://jszyapi.com/api.php/provide/vod/",
+      "detail": "https://jszyapi.com/api.php/provide/vod/"
+    },
+    "ikun": {
+      "name": "iKun影视[秒播]",
+      "api": "https://ikunzyapi.com/api.php/provide/vod/",
+      "detail": "https://ikunzyapi.com/api.php/provide/vod/"
+    },
+    "haohua": {
+      "name": "豪华影视[专线]",
+      "api": "https://hhzyapi.com/api.php/provide/vod/",
+      "detail": "https://hhzyapi.com/api.php/provide/vod/"
+    },
+    "shandian": {
+      "name": "闪电影视[秒播]",
+      "api": "https://sdzyapi.com/api.php/provide/vod/",
+      "detail": "https://sdzyapi.com/api.php/provide/vod/"
+    },
+    "huya": {
+      "name": "虎牙影视[高清]",
+      "api": "https://www.huyaapi.com/api.php/provide/vod/",
+      "detail": "https://www.huyaapi.com/api.php/provide/vod/"
+    },
+    "liangzi": {
+      "name": "量子影视[大厂]",
+      "api": "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/",
+      "detail": "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/"
+    },
+    "baofeng": {
+      "name": "暴风影视[高速]",
+      "api": "https://bfzyapi.com/api.php/provide/vod/",
+      "detail": "https://bfzyapi.com/api.php/provide/vod/"
+    },
+    "feifan": {
+      "name": "非凡影视[全能]",
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod/",
+      "detail": "https://cj.ffzyapi.com/api.php/provide/vod/"
+    },
+    "xinlang": {
+      "name": "新浪影视[精选]",
+      "api": "http://api.xinlangapi.com/xinlangapi.php/provide/vod/",
+      "detail": "http://api.xinlangapi.com/xinlangapi.php/provide/vod/"
+    },
+    "1080zy": {
+      "name": "优质1080P[无广告]",
+      "api": "https://api.1080zyku.com/inc/apijson.php",
+      "detail": "https://api.1080zyku.com/inc/apijson.php"
+    },
+    "360zy": {
+      "name": "360影视[全库]",
+      "api": "https://360zy.com/api.php/provide/vod/",
+      "detail": "https://360zy.com/api.php/provide/vod/"
+    },
+    "yinghua": {
+      "name": "樱花动漫[专线]",
+      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod/",
+      "detail": "https://m3u8.apiyhzy.com/api.php/provide/vod/"
+    },
+    "modu": {
+      "name": "魔都动漫[日漫/国漫]",
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
+      "detail": "https://caiji.moduapi.cc/api.php/provide/vod/"
+    },
+    "kuaiche": {
+      "name": "快车资源[备用]",
+      "api": "https://caiji.kuaichezy.net/api.php/provide/vod/",
+      "detail": "https://caiji.kuaichezy.net/api.php/provide/vod/"
+    },
+    "wolong": {
+      "name": "卧龙资源",
+      "api": "https://collect.wolongzyw.com/api.php/provide/vod/",
+      "detail": "https://collect.wolongzyw.com/api.php/provide/vod/"
+    },
+    "tiankong": {
+      "name": "天空资源",
+      "api": "https://m3u8.tiankongapi.com/api.php/provide/vod/",
+      "detail": "https://m3u8.tiankongapi.com/api.php/provide/vod/"
+    },
+    "heimuer": {
+      "name": "黑木耳资源",
+      "api": "https://json.heimuer.tv/api.php/provide/vod/",
+      "detail": "https://json.heimuer.tv/api.php/provide/vod/"
+    },
+    "uku": {
+      "name": "U酷影视",
+      "api": "https://api.ukuapi.com/api.php/provide/vod/",
+      "detail": "https://api.ukuapi.com/api.php/provide/vod/"
+    },
+    "inmi": {
+      "name": "映迷资源",
+      "api": "https://www.inmi.app/api.php/provide/vod/",
+      "detail": "https://www.inmi.app/api.php/provide/vod/"
+    },
+    "huawei8": {
+      "name": "华为吧影视",
+      "api": "https://cj.hw8.cc/api.php/provide/vod/",
+      "detail": "https://cj.hw8.cc/api.php/provide/vod/"
+    },
+    "baidu": {
+      "name": "百度影视",
+      "api": "https://api.apibdzy.com/api.php/provide/vod/",
+      "detail": "https://api.apibdzy.com/api.php/provide/vod/"
+    }
+  },
+  "custom_category": [
+    {
+      "name": "电影",
+      "type": "movie",
+      "query": "电影"
+    },
+    {
+      "name": "电视剧",
+      "type": "tv",
+      "query": "电视剧"
+    },
+    {
+      "name": "综艺",
+      "type": "show",
+      "query": "综艺"
+    },
+    {
+      "name": "动漫",
+      "type": "anime",
+      "query": "动漫"
+    }
+  ]
+}
