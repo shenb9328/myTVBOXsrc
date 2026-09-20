@@ -692,8 +692,9 @@ INDEX_HTML = """<!DOCTYPE html>
             <div class="modal-header">
                 <div class="modal-header-left">
                     <div class="modal-title" id="modalTitle">正在播放</div>
-                    <span id="modeBadge" class="mode-badge mode-lan">⚡ 局域网直连</span>
-                    <button id="modeSwitchBtn" class="mode-switch-btn" onclick="togglePlayMode()">切换中转</button>
+                    <span id="modeBadge" class="mode-badge mode-lan">⚡ 局域网播放 (NAS加速)</span>
+                    <button id="lineSwitchBtn" class="mode-switch-btn" onclick="togglePlayLine()">换移动专线</button>
+                    <button id="copyUrlBtn" class="mode-switch-btn" onclick="copyDirectUrl()">复制直连</button>
                 </div>
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
@@ -780,43 +781,55 @@ INDEX_HTML = """<!DOCTYPE html>
             });
         }
 
-        function updateModeUI(mode) {
+        let currentLine = 'migu'; // 'migu' or 'pltv'
+
+        function updateModeUI() {
             const badge = document.getElementById('modeBadge');
-            const btn = document.getElementById('modeSwitchBtn');
-            if (!badge || !btn) return;
-            if (mode === 'lan') {
-                badge.className = 'mode-badge mode-lan';
-                badge.innerHTML = '⚡ 局域网直连';
-                btn.innerText = '切换中转';
-            } else {
-                badge.className = 'mode-badge mode-wan';
-                badge.innerHTML = '🛡️ 外网中转';
-                btn.innerText = '切换直连';
+            const btn = document.getElementById('lineSwitchBtn');
+            if (badge) {
+                if (isLocalNetwork()) {
+                    badge.className = 'mode-badge mode-lan';
+                    badge.innerHTML = '⚡ 局域网播放 (NAS加速)';
+                } else {
+                    badge.className = 'mode-badge mode-wan';
+                    badge.innerHTML = '🌐 外网访问 (远程加速)';
+                }
+            }
+            if (btn) {
+                btn.innerText = (currentLine === 'migu') ? '换移动专线' : '换咪咕专线';
             }
         }
 
-        function togglePlayMode() {
+        function togglePlayLine() {
             if (!currentMovie) return;
-            const newMode = (currentPlayMode === 'lan') ? 'proxy' : 'lan';
-            startPlayWithMode(currentMovie, newMode);
+            currentLine = (currentLine === 'migu') ? 'pltv' : 'migu';
+            startPlayWithCurrentLine(currentMovie);
+        }
+
+        function copyDirectUrl() {
+            if (!currentMovie) return;
+            const rawUrl = (currentLine === 'pltv' && currentMovie.pltv_url) ? currentMovie.pltv_url : (currentMovie.migu_url || currentMovie.play_url);
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(rawUrl).then(() => alert('已复制直连地址到剪贴板！可粘贴至 PotPlayer / VLC / 电视机顶盒播放。'));
+            } else {
+                prompt('请长按复制直连播放地址：', rawUrl);
+            }
         }
 
         function playMovie(movie) {
             currentMovie = movie;
+            currentLine = 'migu';
             document.getElementById('modalTitle').innerText = movie.name + ' (' + movie.full_time + ')';
             const modal = document.getElementById('playModal');
             modal.classList.add('open');
-
-            // 局域网优先直连，外网默认中转代理
-            const defaultMode = isLocalNetwork() ? 'lan' : 'proxy';
-            startPlayWithMode(movie, defaultMode);
+            startPlayWithCurrentLine(movie);
         }
 
-        function startPlayWithMode(movie, mode) {
-            currentPlayMode = mode;
-            updateModeUI(mode);
+        function startPlayWithCurrentLine(movie) {
+            updateModeUI();
 
-            const targetUrl = (mode === 'lan') ? movie.play_url : ('/api/cctv6/proxy?url=' + encodeURIComponent(movie.play_url));
+            const rawUrl = (currentLine === 'pltv' && movie.pltv_url) ? movie.pltv_url : (movie.migu_url || movie.play_url);
+            const targetUrl = '/api/cctv6/proxy?url=' + encodeURIComponent(rawUrl);
 
             if (art) {
                 art.destroy(false);
@@ -827,9 +840,10 @@ INDEX_HTML = """<!DOCTYPE html>
             function triggerFallback(errDetail) {
                 if (hasFallback) return;
                 hasFallback = true;
-                if (currentPlayMode === 'lan') {
-                    console.warn('[CCTV6] 直连拉流受阻 (' + errDetail + ')，自动降级为外网中转代理模式重试...');
-                    startPlayWithMode(movie, 'proxy');
+                if (currentLine === 'migu' && movie.pltv_url) {
+                    console.warn('[CCTV6] 咪咕专线拉流受阻 (' + errDetail + ')，自动降级切换为移动专线重试...');
+                    currentLine = 'pltv';
+                    startPlayWithCurrentLine(movie);
                 }
             }
 

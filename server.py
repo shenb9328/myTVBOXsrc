@@ -1276,6 +1276,9 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
     def handle_cctv6_proxy(self, target_url):
         """流媒体中转代理：为外网访问提供 M3U8 重写与 TS 切片流式中继，抹平运营商与 HTTPS 限制"""
         try:
+            if target_url.startswith('/'):
+                target_url = f"http://127.0.0.1:{PORT}" + target_url
+
             req_headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 "Referer": "http://live.miguvideo.com/",
@@ -1298,23 +1301,32 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
                     self.send_error(502, f"CCTV6 Stream Fetch Failed: {ex}")
                     return
 
+            final_url = resp.geturl()
             content_type = resp.headers.get('Content-Type', '')
-            is_m3u8 = 'mpegurl' in content_type.lower() or 'octet-stream' in content_type.lower() or target_url.endswith('.m3u8') or 'index.m3u8' in target_url
+            first_chunk = resp.read(512)
+            is_m3u8 = (
+                first_chunk.startswith(b'#EXTM3U') or 
+                first_chunk.startswith(b'#EXT') or 
+                '.m3u8' in final_url.lower() or 
+                '.m3u8' in target_url.lower() or 
+                'mpegurl' in content_type.lower()
+            )
 
             if is_m3u8:
-                raw_text = resp.read().decode('utf-8', errors='ignore')
+                remaining = resp.read()
+                raw_text = (first_chunk + remaining).decode('utf-8', errors='ignore')
                 rewritten_lines = []
                 for line in raw_text.splitlines():
                     line_s = line.strip()
                     if line_s.startswith('#EXT-X-KEY') or line_s.startswith('#EXT-X-MAP'):
                         def replace_uri(match):
                             orig = match.group(1)
-                            resolved = urllib.parse.urljoin(target_url, orig)
+                            resolved = urllib.parse.urljoin(final_url, orig)
                             return f'URI="/api/cctv6/proxy?url={urllib.parse.quote(resolved)}"'
                         line = re.sub(r'URI="([^"]+)"', replace_uri, line)
                         rewritten_lines.append(line)
                     elif line_s and not line_s.startswith('#'):
-                        resolved = urllib.parse.urljoin(target_url, line_s)
+                        resolved = urllib.parse.urljoin(final_url, line_s)
                         rewritten_lines.append(f"/api/cctv6/proxy?url={urllib.parse.quote(resolved)}")
                     else:
                         rewritten_lines.append(line)
@@ -1324,6 +1336,8 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8')
                 self.send_header('Content-Length', str(len(body)))
                 self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Headers', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
                 self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
                 self.end_headers()
                 self.wfile.write(body)
@@ -1337,9 +1351,13 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
                 if 'Content-Range' in resp.headers:
                     self.send_header('Content-Range', resp.headers['Content-Range'])
                 self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Headers', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
                 self.send_header('Accept-Ranges', 'bytes')
                 self.end_headers()
 
+                if first_chunk:
+                    self.wfile.write(first_chunk)
                 while True:
                     chunk = resp.read(64 * 1024)
                     if not chunk:
