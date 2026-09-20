@@ -156,11 +156,14 @@ def sync_strm_files():
     return count
 
 def get_all_recent_movies(days=7):
-    """获取近 N 天的所有电影，按播出时间倒序排列"""
+    """获取近 N 天的所有已播出电影，按播出时间倒序排列"""
     all_movies = []
+    now_ms = int(time.time() * 1000)
     for d in get_recent_days(days):
         movies = get_cctv6_movies(d["date"])
-        all_movies.extend(movies)
+        # 只保留已经播出或正在播出的电影 (start_ts <= 当前时间)
+        broadcasted = [m for m in movies if m.get("start_ts", 0) <= now_ms]
+        all_movies.extend(broadcasted)
     # 按 start_ts 倒序（最新的电影排最前）
     all_movies.sort(key=lambda x: x.get("start_ts", 0), reverse=True)
     return all_movies
@@ -291,6 +294,11 @@ def build_tvbox_response(qs):
         t = recent_days[0]["date"]
 
     movies = get_cctv6_movies(t)
+    now_ms = int(time.time() * 1000)
+    # 过滤掉未来未播出的场次
+    movies = [m for m in movies if m.get("start_ts", 0) <= now_ms]
+    # 按播出时间倒序排列
+    movies.sort(key=lambda x: x.get("start_ts", 0), reverse=True)
     vod_list = []
     for m in movies:
         vod_list.append({
