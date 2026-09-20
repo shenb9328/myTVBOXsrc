@@ -14,9 +14,24 @@ import os
 import sys
 import json
 import time
+import socket
 import urllib.request
 import threading
 from datetime import datetime, timezone, timedelta
+
+def get_lan_ip():
+    """获取本机的真实局域网 IP"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('192.168.0.1', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return '192.168.0.120'
+
+LAN_IP = get_lan_ip()
+PORT = 5888
 
 MEDIA_DIR = "/vol1/1001/myMedia/CCTV6往期电影"
 
@@ -26,6 +41,46 @@ UTC_TZ = timezone.utc
 CACHE = {}
 CACHE_LOCK = threading.Lock()
 LAST_FETCH_TIME = {}
+
+MIGU_BASE_URL = "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=202609201203023fda1328633f4c4ca96a1cb5004e3698&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260920120302&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260920120302&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b8a2a8ccd7a08b13858bb458e9c9c5e6"
+
+def get_migu_base_url(force_refresh=False):
+    global MIGU_BASE_URL
+    cache_file = os.path.join(os.path.dirname(__file__), "migu_base_url.cache")
+    if not force_refresh and os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                saved = f.read().strip()
+                if saved.startswith("http"):
+                    MIGU_BASE_URL = saved
+                    return MIGU_BASE_URL
+        except Exception:
+            pass
+
+    if force_refresh or not MIGU_BASE_URL:
+        urls = [
+            "https://ghfast.top/raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+            "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+        ]
+        for u in urls:
+            try:
+                req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    text = resp.read().decode("utf-8")
+                    for line in text.splitlines():
+                        if "CCTV6" in line or "CCTV-6" in line:
+                            parts = line.split(",")
+                            if len(parts) >= 2 and "miguvideo.com" in parts[1]:
+                                MIGU_BASE_URL = parts[1].strip()
+                                try:
+                                    with open(cache_file, "w", encoding="utf-8") as f:
+                                        f.write(MIGU_BASE_URL)
+                                except Exception:
+                                    pass
+                                return MIGU_BASE_URL
+            except Exception:
+                pass
+    return MIGU_BASE_URL
 
 def get_cctv6_movies(date_str):
     """获取指定日期 (YYYYMMDD) 的 CCTV-6 电影列表，并计算 PLTV 播放地址"""
@@ -76,13 +131,20 @@ def get_cctv6_movies(date_str):
         dt_start = datetime.fromtimestamp(start_ms / 1000, tz=BJ_TZ)
         dt_end = datetime.fromtimestamp(end_ms / 1000, tz=BJ_TZ)
 
-        # 换算为标准 UTC 时间供 PLTV 时移协议使用 (解决跨午夜截断核心)
+        # 换算为时间戳格式供咪咕时移使用 (YYYYMMDDHHMMSS)
+        start_migu = dt_start.strftime('%Y%m%d%H%M%S')
+        end_migu = dt_end.strftime('%Y%m%d%H%M%S')
+
+        # 换算为标准 UTC 时间供 PLTV 时移协议使用 (作为跨网络备用线路)
         dt_start_utc = dt_start.astimezone(UTC_TZ)
         dt_end_utc = dt_end.astimezone(UTC_TZ)
         start_pltv = dt_start_utc.strftime('%Y%m%dT%H%M%S.00Z')
         end_pltv = dt_end_utc.strftime('%Y%m%dT%H%M%S.00Z')
 
-        play_url = f"http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225814/index.m3u8?playtype=1&starttime={start_pltv}&endtime={end_pltv}"
+        migu_play_url = f"http://{LAN_IP}:{PORT}/api/cctv6/play.m3u8?begin={start_migu}&end={end_migu}"
+        pltv_play_url = f"http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225814/index.m3u8?playtype=1&starttime={start_pltv}&endtime={end_pltv}"
+        
+        play_url = migu_play_url
         pic = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop&q=60"
         
         movies.append({
@@ -96,6 +158,8 @@ def get_cctv6_movies(date_str):
             "duration_min": duration_min,
             "is_cross_day": dt_start.date() != dt_end.date(),
             "play_url": play_url,
+            "migu_url": migu_play_url,
+            "pltv_url": pltv_play_url,
             "pic": pic,
             "start_ts": start_ms,
             "end_ts": end_ms
@@ -199,6 +263,8 @@ def query_cctv6_for_super_vod(page=1, pagesize=30, class_kw="", keyword=""):
 
     vod_list = []
     for m in page_items:
+        migu_u = m.get("migu_url") or m["play_url"]
+        pltv_u = m.get("pltv_url") or m["play_url"]
         vod_list.append({
             "vod_id": f"cctv6_{m['id']}",
             "vod_name": m["name"],
@@ -211,8 +277,8 @@ def query_cctv6_for_super_vod(page=1, pagesize=30, class_kw="", keyword=""):
             "vod_actor": "CCTV-6高清重温",
             "vod_director": "中央广播电视总台",
             "vod_content": f"播出时间: {m['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
-            "vod_play_from": "CCTV-6高清",
-            "vod_play_url": f"全片正片${m['play_url']}"
+            "vod_play_from": "咪咕高清时移$$$移动OTT时移",
+            "vod_play_url": f"全片正片${migu_u}$$$全片正片${pltv_u}"
         })
 
     import math
@@ -241,6 +307,9 @@ def get_cctv6_detail_for_super_vod(vod_id):
     if not target:
         return None
 
+    migu_u = target.get("migu_url") or target["play_url"]
+    pltv_u = target.get("pltv_url") or target["play_url"]
+
     return {
         "vod_id": vod_id,
         "vod_name": target["name"],
@@ -253,8 +322,8 @@ def get_cctv6_detail_for_super_vod(vod_id):
         "vod_actor": "CCTV-6高清重温",
         "vod_director": "中央广播电视总台",
         "vod_content": f"播出时间: {target['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
-        "vod_play_from": "CCTV-6高清",
-        "vod_play_url": f"全片正片${target['play_url']}"
+        "vod_play_from": "咪咕高清时移$$$移动OTT时移",
+        "vod_play_url": f"全片正片${migu_u}$$$全片正片${pltv_u}"
     }
 
 def build_tvbox_response(qs):
@@ -273,6 +342,8 @@ def build_tvbox_response(qs):
         if not target:
             return {"list": []}
         
+        migu_u = target.get("migu_url") or target["play_url"]
+        pltv_u = target.get("pltv_url") or target["play_url"]
         detail = {
             "vod_id": target["id"],
             "vod_name": target["name"],
@@ -282,8 +353,8 @@ def build_tvbox_response(qs):
             "vod_area": "中国大陆",
             "vod_remarks": target["duration"],
             "vod_content": f"播出时间: {target['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
-            "vod_play_from": "CCTV-6高清",
-            "vod_play_url": f"全片正片${target['play_url']}"
+            "vod_play_from": "咪咕高清时移$$$移动OTT时移",
+            "vod_play_url": f"全片正片${migu_u}$$$全片正片${pltv_u}"
         }
         return {"list": [detail]}
 
@@ -323,8 +394,8 @@ def build_m3u_content():
         '#EXTM3U x-tvg-url="https://live.fanmingming.com/e.xml"',
         '',
         '# CCTV-6 直播 (支持全天 EPG 回看)',
-        '#EXTINF:-1 tvg-name="CCTV-6" tvg-id="cctv6" catchup="append" catchup-source="?playtype=1&starttime=${(b)yyyyMMddTHHmmss.00Z}&endtime=${(e)yyyyMMddTHHmmss.00Z}" group-title="央视频道",CCTV-6 电影 (时移回放)',
-        'http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225814/index.m3u8',
+        f'#EXTINF:-1 tvg-name="CCTV-6" tvg-id="cctv6" catchup="append" catchup-source="?playbackbegin=${{(b)yyyyMMddHHmmss}}&playbackend=${{(e)yyyyMMddHHmmss}}" group-title="央视频道",CCTV-6 电影 (咪咕时移)',
+        f'http://{LAN_IP}:{PORT}/api/cctv6/play.m3u8',
         ''
     ]
 

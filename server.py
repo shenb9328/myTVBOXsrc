@@ -971,6 +971,47 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(content)
             return
 
+        elif path in ['/api/cctv6/play', '/api/cctv6/play.m3u8', '/api/cctv6/stream.m3u8']:
+            query_params = urllib.parse.parse_qs(parsed.query)
+            begin = query_params.get('begin', [''])[0] or query_params.get('playbackbegin', [''])[0]
+            end = query_params.get('end', [''])[0] or query_params.get('playbackend', [''])[0]
+            use_proxy = query_params.get('proxy', ['0'])[0] == '1'
+
+            def resolve_stream(force_refresh=False):
+                base_u = cctv6.get_migu_base_url(force_refresh=force_refresh)
+                if begin and end:
+                    req_u = f"{base_u}&playbackbegin={begin}&playbackend={end}"
+                else:
+                    req_u = base_u
+
+                req = urllib.request.Request(req_u, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    content = resp.read().decode('utf-8')
+                    sub_line = [l for l in content.splitlines() if l and not l.startswith('#')][0]
+                    resolved_sub = urllib.parse.urljoin(req_u, sub_line)
+                    return resolved_sub
+
+            try:
+                try:
+                    target_url = resolve_stream(force_refresh=False)
+                except Exception:
+                    target_url = resolve_stream(force_refresh=True)
+
+                if use_proxy:
+                    self.handle_cctv6_proxy(target_url)
+                    return
+
+                # 302 重定向到直连 HTTP 01.m3u8 地址 (直接送达拥有完整分片的真实流地址，零嗅探零多余跳转)
+                self.send_response(302)
+                self.send_header('Location', target_url)
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                return
+            except Exception as e:
+                self.send_error(502, f"Resolve Migu Stream Failed: {e}")
+                return
+
         elif path == '/api/cctv6/proxy':
             query_params = urllib.parse.parse_qs(parsed.query)
             target_url = query_params.get('url', [''])[0]
