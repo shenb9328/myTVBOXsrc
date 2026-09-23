@@ -97,6 +97,28 @@ def init_db():
           AND vod_class NOT LIKE '%港澳剧%' AND vod_class NOT LIKE '%台湾剧%';
         """)
 
+        # 自动纠偏：修复短剧误归类为电影
+        c.execute("""
+        UPDATE videos SET type_id = 5, type_name = '短剧'
+        WHERE type_id = 1 AND (
+            vod_class IN ('现代都市', '脑洞悬疑', '古装仙侠', '穿越年代', '重生民国', '言情总裁', '擦边短剧', 'AI漫剧', '爽文短剧', '反转爽剧', '女频恋爱')
+            OR vod_class LIKE '%短剧%'
+            OR vod_class LIKE '%爽剧%'
+            OR vod_class LIKE '%微短剧%'
+            OR (vod_remarks LIKE '%全集完结%' AND vod_class IN ('现代都市', '脑洞悬疑', '古装仙侠'))
+        );
+        """)
+
+        # 自动纠偏：修复体育赛事误归类为电影
+        c.execute("""
+        UPDATE videos SET type_id = 3, type_name = '综艺'
+        WHERE type_id = 1 AND (
+            vod_class IN ('足球', '篮球', '台球', '其他赛事', '体育赛事')
+            OR vod_name LIKE '%西甲%' OR vod_name LIKE '%英超%' OR vod_name LIKE '%意甲%'
+            OR vod_name LIKE '%赛季%' OR vod_name LIKE '%联赛%'
+        );
+        """)
+
         conn.commit()
         conn.close()
 
@@ -106,29 +128,41 @@ def map_type_id(raw_type_name: str, raw_class: str = "") -> int:
     c_name = raw_class or ""
     text = f"{t_name},{c_name}"
 
-    # 1. 优先排除短剧
-    if any(k in text for k in ['短剧', '爽剧', '微短剧', '反转爽剧', '总裁', '穿越年代', '现代都市短剧']):
-        return 5
+    # 1. 优先排除短剧 (覆盖全网各大采集站微短剧/竖屏爽剧常见分类)
+    short_play_keywords = [
+        '短剧', '爽剧', '微短剧', '反转爽剧', '总裁', '穿越年代', '现代都市',
+        '言情总裁', '脑洞悬疑', '古装仙侠', '重生民国', '擦边短剧', 'AI漫剧',
+        '爽文短剧', '女频恋爱', '逆袭', '微剧'
+    ]
+    if any(k in text for k in short_play_keywords):
+        if not any(k in text for k in ['动漫', '动画', '电影', '国产剧', '港剧', '韩剧', '美剧', '电视剧']):
+            return 5
+        elif any(k in text for k in ['短剧', '微短剧', '爽剧']):
+            return 5
 
-    # 2. 动漫与动画
+    # 2. 体育赛事（归入综艺/赛事，防止污染电影分类）
+    if any(k in text for k in ['体育', '赛事', '足球', '篮球', '台球', '西甲', '英超', '意甲', '德甲', '中超', '欧冠', 'NBA', 'CBA']):
+        return 3
+
+    # 3. 动漫与动画
     if any(k in text for k in ['动漫', '动画', '日漫', '国漫', '新番', '番剧', '剧场版']):
         return 4
 
-    # 3. 综艺
+    # 4. 综艺
     if any(k in text for k in ['综艺', '真人秀', '脱口秀', '选秀', '晚会']):
         return 3
 
-    # 4. 明确的电影类型（动作片、喜剧片、科幻片、爱情片、恐怖片、剧情片、战争片、微电影等）
+    # 5. 明确的电影类型（动作片、喜剧片、科幻片、爱情片、恐怖片、剧情片、战争片、微电影等）
     movie_words = ['动作片', '喜剧片', '科幻片', '爱情片', '恐怖片', '剧情片', '战争片', '惊悚片', '纪录片', '灾难片', '悬疑片', '犯罪片', '奇幻片', '预告片', '电影']
     if any(k in t_name for k in movie_words):
         return 1
 
-    # 5. 明确的电视剧分类（国产剧、欧美剧、韩剧、日剧、港剧、台剧、泰剧等）
+    # 6. 明确的电视剧分类（国产剧、欧美剧、韩剧、日剧、港剧、台剧、泰剧等）
     tv_words = ['国产剧', '内地剧', '大陆剧', '欧美剧', '韩剧', '日剧', '港剧', '台剧', '泰剧', '英剧', '海外剧', '香港剧', '台湾剧', '港澳剧', '马泰剧', '连续剧', '电视剧']
     if any(k in t_name for k in tv_words) or any(k in c_name for k in tv_words):
         return 2
 
-    # 6. 兜底判定
+    # 7. 兜底判定
     if any(k in t_name for k in ['动作', '喜剧', '爱情', '科幻', '恐怖', '惊悚', '战争', '悬疑', '犯罪', '奇幻', '剧情']):
         return 1
     if any(k in t_name for k in ['剧', '连续']):
