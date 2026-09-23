@@ -42,44 +42,81 @@ CACHE = {}
 CACHE_LOCK = threading.Lock()
 LAST_FETCH_TIME = {}
 
-MIGU_BASE_URL = "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=202609201203023fda1328633f4c4ca96a1cb5004e3698&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260920120302&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260920120302&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b8a2a8ccd7a08b13858bb458e9c9c5e6"
+MIGU_BASE_URL = "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=2026092310030269189d86f8e04f61948b3d1bb604d588&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260923100302&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260923100302&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=ZQ-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=43dccd3b779d155c0c649d24e6ba6c98"
+
+def is_migu_url_alive(url):
+    """毫秒级验证咪咕直播/时移基准地址是否有效（返回 200 为有效，返回 605/403/超时为失效）"""
+    if not url or not url.startswith("http"):
+        return False
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
 
 def get_migu_base_url(force_refresh=False):
+    """自动获取、自检并自愈更新咪咕 CCTV-6 动态签名流地址"""
     global MIGU_BASE_URL
+    import re
     cache_file = os.path.join(os.path.dirname(__file__), "migu_base_url.cache")
-    if not force_refresh and os.path.exists(cache_file):
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                saved = f.read().strip()
-                if saved.startswith("http"):
+
+    # 1. 优先复用当前内存中或磁盘缓存中的 URL（需经过存活校验）
+    if not force_refresh:
+        if MIGU_BASE_URL and is_migu_url_alive(MIGU_BASE_URL):
+            return MIGU_BASE_URL
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    saved = f.read().strip()
+                if saved.startswith("http") and is_migu_url_alive(saved):
                     MIGU_BASE_URL = saved
                     return MIGU_BASE_URL
+            except Exception:
+                pass
+
+    # 2. 缓存失效或强制刷新时，从多镜像订阅源拉取最新候选地址
+    urls = [
+        "https://ghfast.top/raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+        "https://ghfast.top/raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
+        "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u"
+    ]
+    candidates = []
+    for u in urls:
+        try:
+            req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                text = resp.read().decode("utf-8")
+                for line in text.splitlines():
+                    if ("CCTV6" in line or "CCTV-6" in line) and "miguvideo.com" in line:
+                        parts = line.split(",")
+                        for p in parts:
+                            p = p.strip()
+                            if p.startswith("http") and "miguvideo.com" in p and p not in candidates:
+                                candidates.append(p)
+            if candidates:
+                break
         except Exception:
             pass
 
-    if force_refresh or not MIGU_BASE_URL:
-        urls = [
-            "https://ghfast.top/raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
-            "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
-        ]
-        for u in urls:
+    # 3. 按时间戳倒序排列，优先检测最新生成的 token 候选
+    def extract_ts(c_url):
+        m = re.search(r'timestamp=(\d+)', c_url)
+        return m.group(1) if m else ''
+    candidates.sort(key=extract_ts, reverse=True)
+
+    # 4. 逐个验证存活状态，命中首个 200 即落盘缓存并返回
+    for cand in candidates:
+        if is_migu_url_alive(cand):
+            MIGU_BASE_URL = cand
             try:
-                req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    text = resp.read().decode("utf-8")
-                    for line in text.splitlines():
-                        if "CCTV6" in line or "CCTV-6" in line:
-                            parts = line.split(",")
-                            if len(parts) >= 2 and "miguvideo.com" in parts[1]:
-                                MIGU_BASE_URL = parts[1].strip()
-                                try:
-                                    with open(cache_file, "w", encoding="utf-8") as f:
-                                        f.write(MIGU_BASE_URL)
-                                except Exception:
-                                    pass
-                                return MIGU_BASE_URL
+                with open(cache_file, "w", encoding="utf-8") as f:
+                    f.write(MIGU_BASE_URL)
             except Exception:
                 pass
+            return MIGU_BASE_URL
+
     return MIGU_BASE_URL
 
 def get_cctv6_movies(date_str):
@@ -142,7 +179,8 @@ def get_cctv6_movies(date_str):
         end_pltv = dt_end_utc.strftime('%Y%m%dT%H%M%S.00Z')
 
         migu_play_url = f"http://{LAN_IP}:{PORT}/api/cctv6/play.m3u8?begin={start_migu}&end={end_migu}"
-        pltv_play_url = f"http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225814/index.m3u8?playtype=1&starttime={start_pltv}&endtime={end_pltv}"
+        proxy_play_url = f"http://{LAN_IP}:{PORT}/api/cctv6/play.m3u8?begin={start_migu}&end={end_migu}&proxy=1"
+        pltv_play_url = proxy_play_url
         
         play_url = migu_play_url
         pic = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop&q=60"
@@ -308,7 +346,7 @@ def get_cctv6_detail_for_super_vod(vod_id):
         return None
 
     migu_u = target.get("migu_url") or target["play_url"]
-    pltv_u = target.get("pltv_url") or target["play_url"]
+    proxy_u = target.get("pltv_url") or f"{migu_u}&proxy=1"
 
     return {
         "vod_id": vod_id,
@@ -322,8 +360,8 @@ def get_cctv6_detail_for_super_vod(vod_id):
         "vod_actor": "CCTV-6高清重温",
         "vod_director": "中央广播电视总台",
         "vod_content": f"播出时间: {target['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
-        "vod_play_from": "咪咕高清时移$$$移动OTT时移",
-        "vod_play_url": f"全片正片${migu_u}$$$全片正片${pltv_u}"
+        "vod_play_from": "咪咕超清时移$$$咪咕代理加速",
+        "vod_play_url": f"全片正片${migu_u}$$$全片正片${proxy_u}"
     }
 
 def build_tvbox_response(qs):
@@ -343,7 +381,7 @@ def build_tvbox_response(qs):
             return {"list": []}
         
         migu_u = target.get("migu_url") or target["play_url"]
-        pltv_u = target.get("pltv_url") or target["play_url"]
+        proxy_u = target.get("pltv_url") or f"{migu_u}&proxy=1"
         detail = {
             "vod_id": target["id"],
             "vod_name": target["name"],
@@ -353,8 +391,8 @@ def build_tvbox_response(qs):
             "vod_area": "中国大陆",
             "vod_remarks": target["duration"],
             "vod_content": f"播出时间: {target['full_time']}。本片为 CCTV-6 高清回放，无缝支持跨午夜播放。",
-            "vod_play_from": "咪咕高清时移$$$移动OTT时移",
-            "vod_play_url": f"全片正片${migu_u}$$$全片正片${pltv_u}"
+            "vod_play_from": "咪咕超清时移$$$咪咕代理加速",
+            "vod_play_url": f"全片正片${migu_u}$$$全片正片${proxy_u}"
         }
         return {"list": [detail]}
 

@@ -1,17 +1,8 @@
 {
   "spider": "",
   "wallpaper": "https://bing.img.run/rand_uhd.php",
-  "warningText": "NAS本地专线维护源 | 更新时间: 2026-09-20 03:11:01 | 已筛选 16 条极速点播源",
+  "warningText": "NAS本地专线维护源 | 更新时间: 2026-09-23 13:16:19 | 已筛选 14 条极速点播源",
   "sites": [
-    {
-      "key": "cctv6_rewind",
-      "name": "🎬 CCTV-6 往期电影 [无缝跨零点·时移回看]",
-      "type": 1,
-      "api": "http://192.168.0.120:5888/api/cctv6",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
     {
       "key": "nas_super_vod",
       "name": "🎬 我的私有影库 [全网聚合·多线秒播]",
@@ -26,51 +17,6 @@
       "name": "🎬 360影视[全库] [电影·电视·综艺·动漫]",
       "type": 1,
       "api": "http://192.168.0.116:5888/proxy/360zy",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_hongniu",
-      "name": "🎬 红牛影视[极速] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/hongniu",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_baofeng",
-      "name": "🎬 暴风影视[高速] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/baofeng",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_feifan",
-      "name": "🎬 非凡影视[全能] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/feifan",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_jinying",
-      "name": "🎬 金鹰影视[超清] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/jinying",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_modu",
-      "name": "🎬 魔都动漫[日漫/国漫] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/modu",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
@@ -94,10 +40,37 @@
       "filterable": 0
     },
     {
-      "key": "proxy_baidu",
-      "name": "🎬 百度影视 [电影·电视·综艺·动漫]",
+      "key": "proxy_jinying",
+      "name": "🎬 金鹰影视[超清] [电影·电视·综艺·动漫]",
       "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/baidu",
+      "api": "http://192.168.0.116:5888/proxy/jinying",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_feifan",
+      "name": "🎬 非凡影视[全能] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/feifan",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_guangsu",
+      "name": "🎬 光速影视[专线] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/guangsu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_modu",
+      "name": "🎬 魔都动漫[日漫/国漫] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/modu",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
@@ -121,24 +94,6 @@
       "filterable": 0
     },
     {
-      "key": "proxy_suoni",
-      "name": "🎬 索尼影视[4K/秒播] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/suoni",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
-      "key": "proxy_liangzi",
-      "name": "🎬 量子影视[大厂] [电影·电视·综艺·动漫]",
-      "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/liangzi",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 0
-    },
-    {
       "key": "proxy_shandian",
       "name": "🎬 闪电影视[秒播] [电影·电视·综艺·动漫]",
       "type": 1,
@@ -148,10 +103,19 @@
       "filterable": 0
     },
     {
-      "key": "proxy_guangsu",
-      "name": "🎬 光速影视[专线] [电影·电视·综艺·动漫]",
+      "key": "proxy_baidu",
+      "name": "🎬 百度影视 [电影·电视·综艺·动漫]",
       "type": 1,
-      "api": "http://192.168.0.116:5888/proxy/guangsu",
+      "api": "http://192.168.0.116:5888/proxy/baidu",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
+      "key": "proxy_baofeng",
+      "name": "🎬 暴风影视[高速] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/baofeng",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 0
@@ -166,55 +130,19 @@
       "filterable": 0
     },
     {
+      "key": "proxy_suoni",
+      "name": "🎬 索尼影视[4K/秒播] [电影·电视·综艺·动漫]",
+      "type": 1,
+      "api": "http://192.168.0.116:5888/proxy/suoni",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 0
+    },
+    {
       "key": "raw_360zy",
       "name": "⚡ 360影视[全库] [原生细分分类]",
       "type": 1,
       "api": "https://360zy.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_hongniu",
-      "name": "⚡ 红牛影视[极速] [原生细分分类]",
-      "type": 1,
-      "api": "https://www.hongniuzy2.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_baofeng",
-      "name": "⚡ 暴风影视[高速] [原生细分分类]",
-      "type": 1,
-      "api": "https://bfzyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_feifan",
-      "name": "⚡ 非凡影视[全能] [原生细分分类]",
-      "type": 1,
-      "api": "https://cj.ffzyapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_jinying",
-      "name": "⚡ 金鹰影视[超清] [原生细分分类]",
-      "type": 1,
-      "api": "https://jyzyapi.com/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_modu",
-      "name": "⚡ 魔都动漫[日漫/国漫] [原生细分分类]",
-      "type": 1,
-      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
@@ -238,10 +166,37 @@
       "filterable": 1
     },
     {
-      "key": "raw_baidu",
-      "name": "⚡ 百度影视 [原生细分分类]",
+      "key": "raw_jinying",
+      "name": "⚡ 金鹰影视[超清] [原生细分分类]",
       "type": 1,
-      "api": "https://api.apibdzy.com/api.php/provide/vod/",
+      "api": "https://jyzyapi.com/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_feifan",
+      "name": "⚡ 非凡影视[全能] [原生细分分类]",
+      "type": 1,
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_guangsu",
+      "name": "⚡ 光速影视[专线] [原生细分分类]",
+      "type": 1,
+      "api": "https://api.guangsuapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_modu",
+      "name": "⚡ 魔都动漫[日漫/国漫] [原生细分分类]",
+      "type": 1,
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
@@ -265,24 +220,6 @@
       "filterable": 1
     },
     {
-      "key": "raw_suoni",
-      "name": "⚡ 索尼影视[4K/秒播] [原生细分分类]",
-      "type": 1,
-      "api": "https://suoniapi.com/api.php/provide/vod/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
-      "key": "raw_liangzi",
-      "name": "⚡ 量子影视[大厂] [原生细分分类]",
-      "type": 1,
-      "api": "https://cj.lziapi.com/api.php/provide/vod/from/lzm3u8/",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1
-    },
-    {
       "key": "raw_shandian",
       "name": "⚡ 闪电影视[秒播] [原生细分分类]",
       "type": 1,
@@ -292,10 +229,19 @@
       "filterable": 1
     },
     {
-      "key": "raw_guangsu",
-      "name": "⚡ 光速影视[专线] [原生细分分类]",
+      "key": "raw_baidu",
+      "name": "⚡ 百度影视 [原生细分分类]",
       "type": 1,
-      "api": "https://api.guangsuapi.com/api.php/provide/vod/",
+      "api": "https://api.apibdzy.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_baofeng",
+      "name": "⚡ 暴风影视[高速] [原生细分分类]",
+      "type": 1,
+      "api": "https://bfzyapi.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
@@ -305,6 +251,15 @@
       "name": "⚡ 极速影视[蓝光] [原生细分分类]",
       "type": 1,
       "api": "https://jszyapi.com/api.php/provide/vod/",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1
+    },
+    {
+      "key": "raw_suoni",
+      "name": "⚡ 索尼影视[4K/秒播] [原生细分分类]",
+      "type": 1,
+      "api": "https://suoniapi.com/api.php/provide/vod/",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1
@@ -357,12 +312,176 @@
       ]
     }
   ],
-  "lives": [
+  "ijk": [
     {
-      "name": "CCTV-6高清(支持回看)",
-      "type": 0,
-      "url": "http://192.168.0.120:8666/live.m3u",
-      "playerType": 1
+      "group": "软解码",
+      "options": [
+        {
+          "name": "opensles",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "framedrop",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "soundtouch",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "start-on-prepared",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "http-detect-rangeupport",
+          "category": 1,
+          "value": "0"
+        },
+        {
+          "name": "fflags",
+          "category": 1,
+          "value": "fastseek"
+        },
+        {
+          "name": "skip_loop_filter",
+          "category": 2,
+          "value": "48"
+        },
+        {
+          "name": "reconnect",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "enable-accurate-seek",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec-all-videos",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec-auto-rotate",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec-handle-resolution-change",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec-hevc",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "max-buffer-size",
+          "category": 4,
+          "value": "62914560"
+        },
+        {
+          "name": "packet-buffering",
+          "category": 4,
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "group": "硬解码",
+      "options": [
+        {
+          "name": "opensles",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "framedrop",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "soundtouch",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "start-on-prepared",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "http-detect-rangeupport",
+          "category": 1,
+          "value": "0"
+        },
+        {
+          "name": "fflags",
+          "category": 1,
+          "value": "fastseek"
+        },
+        {
+          "name": "skip_loop_filter",
+          "category": 2,
+          "value": "48"
+        },
+        {
+          "name": "reconnect",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "enable-accurate-seek",
+          "category": 4,
+          "value": "0"
+        },
+        {
+          "name": "mediacodec",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "mediacodec-all-videos",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "mediacodec-auto-rotate",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "mediacodec-handle-resolution-change",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "mediacodec-hevc",
+          "category": 4,
+          "value": "1"
+        },
+        {
+          "name": "max-buffer-size",
+          "category": 4,
+          "value": "62914560"
+        },
+        {
+          "name": "packet-buffering",
+          "category": 4,
+          "value": "1"
+        }
+      ]
     }
   ]
 }

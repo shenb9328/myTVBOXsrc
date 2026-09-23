@@ -17,7 +17,7 @@ import urllib.request
 import urllib.parse
 import re
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 导入本地检测引擎与 SQLite 镜像聚合中枢
 from checker import run_inspection, OUTPUT_VOD_JSON, OUTPUT_TVBOX_JSON, OUTPUT_VALID_FILE
@@ -979,8 +979,19 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
 
             def resolve_stream(force_refresh=False):
                 base_u = cctv6.get_migu_base_url(force_refresh=force_refresh)
-                if begin and end:
-                    req_u = f"{base_u}&playbackbegin={begin}&playbackend={end}"
+                
+                # 检查 end 是否超过当前北京时间，避免请求未生成的未来切片导致 404
+                now_bj = datetime.now(cctv6.BJ_TZ)
+                now_bj_str = now_bj.strftime('%Y%m%d%H%M%S')
+                target_end = end
+                if target_end and target_end > now_bj_str:
+                    past_bj_str = (now_bj - timedelta(minutes=1)).strftime('%Y%m%d%H%M%S')
+                    target_end = past_bj_str
+
+                if begin and target_end and target_end > begin:
+                    req_u = f"{base_u}&playbackbegin={begin}&playbackend={target_end}"
+                elif begin:
+                    req_u = f"{base_u}&playbackbegin={begin}"
                 else:
                     req_u = base_u
 
@@ -994,7 +1005,8 @@ class TVBoxRequestHandler(BaseHTTPRequestHandler):
             try:
                 try:
                     target_url = resolve_stream(force_refresh=False)
-                except Exception:
+                except Exception as ex1:
+                    print(f"[CCTV6] Stream resolve failed ({ex1}), retrying with force_refresh...")
                     target_url = resolve_stream(force_refresh=True)
 
                 if use_proxy:

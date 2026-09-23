@@ -40,3 +40,4 @@ apk/*.apk
 .vscode/
 .idea/
 *.swp
+migu_base_url.cache
